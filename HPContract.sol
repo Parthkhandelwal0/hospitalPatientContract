@@ -68,6 +68,24 @@ contract PatientHospital {
      
     }
     
+     function getRecord( address _patientAddress)
+      public
+      view
+      returns (
+        string _name,
+        string _Paddr,
+        uint _PPhoneNumber,
+        uint _BillAmount)
+      {
+         _name = patientrecords[_patientAddress].name;
+         _Paddr = patientrecords[_patientAddress].Paddr;
+         _PPhoneNumber = patientrecords[_patientAddress].PPhoneNumber;
+         _BillAmount = patientrecords[_patientAddress].BillAmount;
+         
+         return(_name,_Paddr,_PPhoneNumber,_BillAmount);
+        //  _visitReason = patientrecords[_recordID][_patientAddress].visitReason;
+      }
+    
     function pay(address _patientAddress) public payable{
         
         require(msg.value==patientrecords[_patientAddress].BillAmount);
@@ -81,4 +99,34 @@ contract PatientHospital {
         balanceReceived[msg.sender]-=_amount;
         _to.transfer(_amount);
     } 
+    function hello(string _ab) external pure returns(string memory){
+        return _ab;
+    }
+}
+
+
+
+contract HospitalInsurance{
+    address addressPatientHospital;
+    bool public isCorrect;
+
+    function setAddress(address _addressPatientHospital) external {
+        addressPatientHospital = _addressPatientHospital;
+    }
+    
+    function getRecord(address _patientAddress) external view  returns (
+        string _name,
+        string _Paddr,
+        uint _PPhoneNumber,
+        uint _BillAmount)
+        {
+            PatientHospital patienthospital = PatientHospital(addressPatientHospital);
+            return patienthospital.getRecord(_patientAddress);
+        }
+    
+    function checkRecords(bool _recordCheck) public returns(string memory) {
+        isCorrect = _recordCheck;
+        require(isCorrect==true,"match not found");
+        return "match found";
+    }     
 }
