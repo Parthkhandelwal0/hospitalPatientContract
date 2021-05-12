@@ -3,6 +3,7 @@ pragma solidity >=0.4.22 <0.7.0;
 
 contract PatientHospital {
     mapping (address => Patientrecords) public patientrecords;
+    mapping (address => Insurance) public patientinsurancerecords;
     mapping(address => uint) balances;
     mapping(address=>uint)public balanceReceived;
 
@@ -17,7 +18,7 @@ contract PatientHospital {
         uint HPhoneNumber;
     } 
     
-     Hospitalrecords  hospital;
+     Hospitalrecords hospital;
      function addHospitalRecord (
         address _hospitalAddress,
         uint256 _Hid,
@@ -27,12 +28,6 @@ contract PatientHospital {
         public
         {
            hospital = Hospitalrecords(_Hid,_hospitalAddress,_name,_Haddr,_HphoneNumber);
-        // Hospitalrecords.hospital = _hospitalAddress;
-        // Hospitalrecords.Hid = _Hid;
-        // Hospitalrecords.name = _name;
-        // Hospitalrecords.HPhoneNumber = _HphoneNumber;
-        // Hospitalrecords.Haddr = _Haddr;
-        // HospitalCount += 1;
     }
     
     function getHospitalRecord() public view returns( address _hospitalAddress,
@@ -44,36 +39,61 @@ contract PatientHospital {
         }
     struct Patientrecords{
         uint Pid;
+        bool isInsurance;
         address _patientAddress;
         address hospitalAddress;
         string name;
         string Paddr;
         uint PPhoneNumber;
         uint BillAmount;
+        string visitReason;
+     
     }
-    function addRecord (
+    struct Insurance{
+        uint256 InsuranceNo;
+        uint256 InsuranceCover;
+        string CompanyName;
+        string ExpiryDate;
+    }
+    function addPatientRecord (
         uint _Pid,
+        bool _isInsurance,
         address _patientAddress,
         address _hospitalAddress,
         string memory _name,
+        string memory _visitReason,
         string memory _Paddr,
         uint _PphoneNumber,
-        uint _BillAmount)
+        uint _BillAmount
+       )
         public
-        
     {
         patientrecords[_patientAddress].Pid = _Pid;
+        patientrecords[_patientAddress].isInsurance = _isInsurance;
         patientrecords[_patientAddress]._patientAddress = _patientAddress;
         patientrecords[_patientAddress].hospitalAddress = _hospitalAddress;
         patientrecords[_patientAddress].name = _name;
         patientrecords[_patientAddress].Paddr = _Paddr;
         patientrecords[_patientAddress].PPhoneNumber = _PphoneNumber;
         patientrecords[_patientAddress].BillAmount = _BillAmount;
-
-
+        patientrecords[_patientAddress].visitReason = _visitReason;
         PatientCount += 1;
-     
     }
+    
+     function addPatientInsuranceRecord (
+        address _patientAddress,
+        uint256 _insuranceNo,
+        uint256 _insuranceCover,
+        string _companyName,
+        string _expiryDate
+        )
+        public{
+            require(patientrecords[_patientAddress].isInsurance==true,"insurance not provided");
+            patientinsurancerecords[_patientAddress].InsuranceNo = _insuranceNo;
+            patientinsurancerecords[_patientAddress].InsuranceCover = _insuranceCover;
+            patientinsurancerecords[_patientAddress].CompanyName = _companyName;
+            patientinsurancerecords[_patientAddress].ExpiryDate = _expiryDate;
+        }
     
      function getRecord( address _patientAddress)
       public
@@ -82,37 +102,42 @@ contract PatientHospital {
         string _name,
         string _Paddr,
         uint _PPhoneNumber,
-        uint _BillAmount)
+        uint _BillAmount,
+        uint256 _insuranceNo,
+        uint256 _insuranceCover,
+        string _companyName,
+        string _expiryDate,
+        string _visitReason
+        )
       {
          _name = patientrecords[_patientAddress].name;
          _Paddr = patientrecords[_patientAddress].Paddr;
          _PPhoneNumber = patientrecords[_patientAddress].PPhoneNumber;
          _BillAmount = patientrecords[_patientAddress].BillAmount;
+         _insuranceNo = patientinsurancerecords[_patientAddress].InsuranceNo;
+         _insuranceCover = patientinsurancerecords[_patientAddress].InsuranceCover;
+         _companyName = patientinsurancerecords[_patientAddress].CompanyName;
+         _expiryDate = patientinsurancerecords[_patientAddress].ExpiryDate;
+         _visitReason = patientrecords[_patientAddress].visitReason;
          
-         return(_name,_Paddr,_PPhoneNumber,_BillAmount);
+         return(_name,_Paddr,_PPhoneNumber,_BillAmount,_insuranceNo,_insuranceCover,_companyName,_expiryDate,_visitReason);
         //  _visitReason = patientrecords[_recordID][_patientAddress].visitReason;
       }
-      function getBill(address _patientAddress) public returns(uint256 _billAmount){
+      function Bill(address _patientAddress) public view returns(uint256 _billAmount){
          _billAmount = patientrecords[_patientAddress].BillAmount;
          return(_billAmount);
       }
     
-    function pay(address _patientAddress) public payable{
+    function pay(address _patientAddress) public payable returns(string){
         require(msg.value==patientrecords[_patientAddress].BillAmount,"incorrect amount");
         balanceReceived[msg.sender]+=msg.value;
+        return "payment done";
     }
     
     function balanceOf() external view returns(uint){
         return address(this).balance;
     }
-    // function withdrawMoney(address _to, uint _amount) public{
-    //     require(_amount<=balanceReceived[msg.sender],"not enough funds.");
-    //     balanceReceived[msg.sender]-=_amount;
-    //     _to.transfer(_amount);
-    // } 
-    // function hello(string _ab) external pure returns(string memory){
-    //     return _ab;
-    // }
+    
 }
 
 
@@ -122,22 +147,29 @@ contract HospitalInsurance{
     bool public isCorrect;
     mapping(address=>uint)public balanceReceived;
     uint256 public billAmount;
+    address public patientAddress;
 
 
     function setAddress(address _addressPatientHospital) external {
         addressPatientHospital = _addressPatientHospital;
     }
     
-    function getRecord(address _patientAddress) external view returns (
+    function setPatientAddress(address _patientAddress) public{
+        patientAddress = _patientAddress;
+    }
+    function getRecord() external view returns (
         string _name,
         string _Paddr,
         uint _PPhoneNumber,
-        uint _BillAmount)
+        uint _BillAmount,
+        uint256 _insuranceNo,
+        uint256 _insuranceCover,
+        string _companyName,
+        string _expiryDate,
+        string _visitReason)
         {
             PatientHospital patienthospital = PatientHospital(addressPatientHospital);
-           
-            return patienthospital.getRecord(_patientAddress);
-            
+            return patienthospital.getRecord(patientAddress);
         }
     
     function checkRecords(bool _recordCheck) public returns(string memory) {
@@ -146,14 +178,15 @@ contract HospitalInsurance{
         return "match found";
     }
     
-    function getBill(address _patientAddress) public returns(uint256){
+    function getBill() public returns(uint256){
          PatientHospital patienthospital = PatientHospital(addressPatientHospital);
-         billAmount = patienthospital.getBill(_patientAddress);
+         billAmount = patienthospital.Bill(patientAddress);
     }
     
-     function pay(address _patientAddress) public payable{
+     function pay() public payable returns(string){
         require(msg.value==billAmount,"incorrect amount");
-        balanceReceived[_patientAddress]+=msg.value;
+        balanceReceived[patientAddress]+=msg.value;
+        return "payment done by the Insurance Company";
     }
     
     function balanceOf() external view returns(uint){
