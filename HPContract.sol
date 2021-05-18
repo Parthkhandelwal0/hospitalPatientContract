@@ -43,8 +43,8 @@ contract PatientHospital {
     }
     function getHospitalRecord() public view returns( address _hospitalAddress,
         uint256 _Hid,
-        string  _name,
-        string  _location,
+        string memory _name,
+        string memory _location,
         uint _HphoneNumber){
             return(hospital.hospitaladdress,hospital.Hid,hospital.name,hospital.Hlocation,hospital.HPhoneNumber );
         }
@@ -76,8 +76,8 @@ contract PatientHospital {
         address _patientAddress,
         uint256 _insuranceNo,
         uint256 _insuranceCover,
-        string _companyName,
-        string _expiryDate
+        string memory _companyName,
+        string  memory _expiryDate
         )
         public{
             require(patientrecords[_patientAddress].isInsurance==true,"insurance not provided");
@@ -90,15 +90,15 @@ contract PatientHospital {
       public
       view
       returns (
-        string _name,
-        string _Plocation,
+        string memory _name,
+        string memory _Plocation,
         uint _PPhoneNumber,
         uint _BillAmount,
         uint256 _insuranceNo,
         uint256 _insuranceCover,
-        string _companyName,
-        string _expiryDate,
-        string _visitReason
+        string memory _companyName,
+        string memory _expiryDate,
+        string memory _visitReason
         )
       {
          _name = patientrecords[_patientAddress].name;
@@ -116,7 +116,7 @@ contract PatientHospital {
          _billAmount = patientrecords[_patientAddress].BillAmount;
          return(_billAmount);
       }
-    function pay(address _patientAddress) public payable returns(string){
+    function pay(address _patientAddress) public payable returns(string memory message){
         require(msg.value==patientrecords[_patientAddress].BillAmount,"incorrect amount");
         balanceReceived[msg.sender] += msg.value;
         return "payment done";
@@ -141,15 +141,15 @@ contract HospitalInsurance{
         patientAddress = _patientAddress;
     }
     function getRecord() external view returns (
-        string _name,
-        string _Paddr,
+        string memory _name,
+        string memory _Paddr,
         uint _PPhoneNumber,
         uint _BillAmount,
         uint256 _insuranceNo,
         uint256 _insuranceCover,
-        string _companyName,
-        string _expiryDate,
-        string _visitReason)
+        string memory _companyName,
+        string memory _expiryDate,
+        string memory _visitReason)
         {
             PatientHospital patienthospital = PatientHospital(addressPatientHospital);
             return patienthospital.getPatientRecord(patientAddress);
@@ -163,7 +163,7 @@ contract HospitalInsurance{
          PatientHospital patienthospital = PatientHospital(addressPatientHospital);
          billAmount = patienthospital.Bill(patientAddress);
     }
-     function pay() public payable returns(string){
+     function pay() public payable returns(string memory message){
         require(isCorrect==true,"incorrect information");
         require(msg.value==billAmount,"incorrect amount");
         balanceReceived[patientAddress]+=msg.value;
